@@ -1,6 +1,6 @@
 import os
 from datetime import datetime
-from tkinter import Tk, Menu, filedialog, messagebox, ttk, Frame, Label, Button
+from tkinter import Tk, Menu, filedialog, messagebox, ttk, Frame, Label, Button, Canvas
 from tkinter import StringVar
 from tkinter.ttk import Notebook, Treeview, Scrollbar
 from models import DataModel, Customer, Product, Order
@@ -42,7 +42,7 @@ class MainWindow:
         file_menu.add_separator()
         file_menu.add_command(label="🚪 Выход", command=self.window.quit)
         
-        # Логотип (простой символ)
+        # ЛОГОТИП - рисуем с помощью Canvas (гарантированно работает)
         self.add_logo()
         
         # Вкладки
@@ -55,34 +55,45 @@ class MainWindow:
         self.notebook = Notebook(self.window)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=(10, 5))
         
+        # Вкладка Заказы (активная по умолчанию)
         self.orders_frame = Frame(self.notebook, bg="#FFFFFF")
         self.notebook.add(self.orders_frame, text="📦 Заказы")
         self.setup_orders_tab()
         
+        # Вкладка Покупатели
         self.customers_frame = Frame(self.notebook, bg="#FFFFFF")
         self.notebook.add(self.customers_frame, text="👥 Покупатели")
         self.setup_customers_tab()
         
+        # Вкладка Товары
         self.products_frame = Frame(self.notebook, bg="#FFFFFF")
         self.notebook.add(self.products_frame, text="📱 Товары")
         self.setup_products_tab()
         
+        # Статусная строка
         self.status_bar = Label(self.window, text=f"👤 Пользователь: {self.user_name}", 
                                 bd=1, relief="sunken", anchor="w", bg="#1A237E", 
                                 fg="#FFD54F", font=("Arial", 9), padx=5)
         self.status_bar.pack(side="bottom", fill="x")
     
     def add_logo(self):
-        """Логотип из символов (не требует файлов)"""
+        """Логотип - нарисованный прямоугольник с текстом (гарантированно работает)"""
+        # Рамка для логотипа
         logo_frame = Frame(self.window, width=140, height=80, bg="#1A237E", 
                           highlightbackground="#FF5722", highlightthickness=2)
         logo_frame.place(x=830, y=10)
         logo_frame.pack_propagate(False)
         
-        # Главный символ
-        Label(logo_frame, text="🖥️", font=("Segoe UI Emoji", 40), 
-              bg="#1A237E", fg="#FFD54F").pack(expand=True, pady=(5, 0))
-        Label(logo_frame, text="TECH", font=("Arial", 9, "bold"), 
+        # Рисуем значок (простой кружок с буквой)
+        canvas = Canvas(logo_frame, width=50, height=50, bg="#1A237E", highlightthickness=0)
+        canvas.pack(pady=(8, 0))
+        canvas.create_oval(5, 5, 45, 45, fill="#FF5722", outline="#FFD54F", width=2)
+        canvas.create_text(25, 25, text="E", font=("Arial", 20, "bold"), fill="#FFD54F")
+        
+        # Текст
+        Label(logo_frame, text="TECH", font=("Arial", 12, "bold"), 
+              bg="#1A237E", fg="#FFD54F").pack()
+        Label(logo_frame, text="SHOP", font=("Arial", 8), 
               bg="#1A237E", fg="#FFD54F").pack()
     
     def setup_customers_tab(self):
@@ -211,6 +222,7 @@ class MainWindow:
     def update_customers_table(self):
         for item in self.customers_tree.get_children():
             self.customers_tree.delete(item)
+        
         for customer in self.data_model.customers:
             self.customers_tree.insert("", "end", values=(
                 customer.last_name, customer.first_name, customer.email,
@@ -220,6 +232,7 @@ class MainWindow:
     def update_products_table(self):
         for item in self.products_tree.get_children():
             self.products_tree.delete(item)
+        
         for product in self.data_model.products:
             self.products_tree.insert("", "end", values=(
                 product.name, product.category, f"{product.price:.2f}", f"{product.weight:.3f}"
@@ -238,10 +251,13 @@ class MainWindow:
     def update_orders_table(self):
         for item in self.orders_tree.get_children():
             self.orders_tree.delete(item)
+        
         average_sum = self.calculate_average_sum()
+        
         for order in self.data_model.orders:
             customer = next((c for c in self.data_model.customers if c.id == order.customer_id), None)
             product = next((p for p in self.data_model.products if p.id == order.product_id), None)
+            
             if customer and product:
                 order_sum = product.price * order.quantity + self.DELIVERY_COST
                 deviation = order_sum - average_sum
@@ -375,6 +391,7 @@ class MainWindow:
         if not self.data_model.products:
             messagebox.showwarning("Предупреждение", "Сначала добавьте товары!")
             return
+        
         dialog = OrderDialog(self.window, self.data_model)
         self.window.wait_window(dialog.dialog)
         if dialog.result:
@@ -432,6 +449,7 @@ class MainWindow:
         if not self.data_model.orders:
             messagebox.showwarning("Предупреждение", "Нет заказов для сохранения!")
             return
+        
         filename = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
