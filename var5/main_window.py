@@ -3,9 +3,10 @@ from datetime import datetime
 from tkinter import Tk, Menu, filedialog, messagebox, ttk, Frame, Label, Button
 from tkinter import StringVar
 from tkinter.ttk import Notebook, Treeview, Scrollbar
-from models import DataModel
+from models import DataModel, Customer, Product, Order
 from data_manager import DataManager
 from dialogs import CustomerDialog, ProductDialog, OrderDialog
+from PIL import Image, ImageTk  # Добавлен импорт PIL
 
 class MainWindow:
     DELIVERY_COST = 500
@@ -43,12 +44,8 @@ class MainWindow:
         file_menu.add_separator()
         file_menu.add_command(label="🚪 Выход", command=self.window.quit)
         
-        # Логотип
-        logo_frame = Frame(self.window, width=140, height=80, bg="#FF5722", 
-                          highlightbackground="#1A237E", highlightthickness=2)
-        logo_frame.place(x=830, y=10)
-        Label(logo_frame, text="📱 ЭЛЕКТРОНИКА", font=("Arial", 11, "bold"), 
-              bg="#FF5722", fg="white").place(relx=0.5, rely=0.5, anchor="center")
+        # Логотип (с поддержкой изображения)
+        self.add_logo()
         
         # Вкладки
         style = ttk.Style()
@@ -80,6 +77,36 @@ class MainWindow:
                                 bd=1, relief="sunken", anchor="w", bg="#1A237E", 
                                 fg="#FFD54F", font=("Arial", 9), padx=5)
         self.status_bar.pack(side="bottom", fill="x")
+    
+    def add_logo(self):
+        """Добавление логотипа справа вверху"""
+        try:
+            # Проверяем существует ли файл logo.png
+            if os.path.exists("logo.png"):
+                # Открываем изображение
+                image = Image.open("logo.png")
+                # Изменяем размер до 140x80
+                image = image.resize((140, 80), Image.Resampling.LANCZOS)
+                # Конвертируем для Tkinter
+                self.logo_image = ImageTk.PhotoImage(image)
+                # Создаем метку с изображением
+                logo_label = Label(self.window, image=self.logo_image, bg="#FFFFFF")
+                logo_label.place(x=830, y=10)
+            else:
+                # Если файла нет, создаем текстовый логотип
+                logo_frame = Frame(self.window, width=140, height=80, bg="#FF5722")
+                logo_frame.place(x=830, y=10)
+                logo_frame.pack_propagate(False)
+                Label(logo_frame, text="🛒 ЭЛЕКТРОНИКА", font=("Arial", 11, "bold"), 
+                      bg="#FF5722", fg="white").pack(expand=True, fill="both")
+        except Exception as e:
+            # Если ошибка при загрузке, создаем простой логотип
+            print(f"Ошибка загрузки логотипа: {e}")
+            logo_frame = Frame(self.window, width=140, height=80, bg="#FF5722")
+            logo_frame.place(x=830, y=10)
+            logo_frame.pack_propagate(False)
+            Label(logo_frame, text="ЭЛЕКТРОНИКА", font=("Arial", 11, "bold"), 
+                  bg="#FF5722", fg="white").pack(expand=True, fill="both")
     
     def setup_customers_tab(self):
         btn_frame = Frame(self.customers_frame, bg="#FFFFFF")
