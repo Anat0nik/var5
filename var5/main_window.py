@@ -6,7 +6,6 @@ from tkinter.ttk import Notebook, Treeview, Scrollbar
 from models import DataModel, Customer, Product, Order
 from data_manager import DataManager
 from dialogs import CustomerDialog, ProductDialog, OrderDialog
-from PIL import Image, ImageTk  # Добавлен импорт PIL
 
 class MainWindow:
     DELIVERY_COST = 500
@@ -18,7 +17,6 @@ class MainWindow:
         self.window.resizable(False, False)
         self.window.configure(bg="#FFFFFF")
         
-        # Установка иконки (опционально)
         try:
             self.window.iconbitmap("icon.ico")
         except:
@@ -44,7 +42,7 @@ class MainWindow:
         file_menu.add_separator()
         file_menu.add_command(label="🚪 Выход", command=self.window.quit)
         
-        # Логотип (с поддержкой изображения)
+        # Логотип (простой символ)
         self.add_logo()
         
         # Вкладки
@@ -57,56 +55,35 @@ class MainWindow:
         self.notebook = Notebook(self.window)
         self.notebook.pack(fill="both", expand=True, padx=10, pady=(10, 5))
         
-        # Вкладка Заказы (активная по умолчанию)
         self.orders_frame = Frame(self.notebook, bg="#FFFFFF")
         self.notebook.add(self.orders_frame, text="📦 Заказы")
         self.setup_orders_tab()
         
-        # Вкладка Покупатели
         self.customers_frame = Frame(self.notebook, bg="#FFFFFF")
         self.notebook.add(self.customers_frame, text="👥 Покупатели")
         self.setup_customers_tab()
         
-        # Вкладка Товары
         self.products_frame = Frame(self.notebook, bg="#FFFFFF")
         self.notebook.add(self.products_frame, text="📱 Товары")
         self.setup_products_tab()
         
-        # Статусная строка
         self.status_bar = Label(self.window, text=f"👤 Пользователь: {self.user_name}", 
                                 bd=1, relief="sunken", anchor="w", bg="#1A237E", 
                                 fg="#FFD54F", font=("Arial", 9), padx=5)
         self.status_bar.pack(side="bottom", fill="x")
     
     def add_logo(self):
-        """Добавление логотипа справа вверху"""
-        try:
-            # Проверяем существует ли файл logo.png
-            if os.path.exists("logo.png"):
-                # Открываем изображение
-                image = Image.open("logo.png")
-                # Изменяем размер до 140x80
-                image = image.resize((140, 80), Image.Resampling.LANCZOS)
-                # Конвертируем для Tkinter
-                self.logo_image = ImageTk.PhotoImage(image)
-                # Создаем метку с изображением
-                logo_label = Label(self.window, image=self.logo_image, bg="#FFFFFF")
-                logo_label.place(x=830, y=10)
-            else:
-                # Если файла нет, создаем текстовый логотип
-                logo_frame = Frame(self.window, width=140, height=80, bg="#FF5722")
-                logo_frame.place(x=830, y=10)
-                logo_frame.pack_propagate(False)
-                Label(logo_frame, text="🛒 ЭЛЕКТРОНИКА", font=("Arial", 11, "bold"), 
-                      bg="#FF5722", fg="white").pack(expand=True, fill="both")
-        except Exception as e:
-            # Если ошибка при загрузке, создаем простой логотип
-            print(f"Ошибка загрузки логотипа: {e}")
-            logo_frame = Frame(self.window, width=140, height=80, bg="#FF5722")
-            logo_frame.place(x=830, y=10)
-            logo_frame.pack_propagate(False)
-            Label(logo_frame, text="ЭЛЕКТРОНИКА", font=("Arial", 11, "bold"), 
-                  bg="#FF5722", fg="white").pack(expand=True, fill="both")
+        """Логотип из символов (не требует файлов)"""
+        logo_frame = Frame(self.window, width=140, height=80, bg="#1A237E", 
+                          highlightbackground="#FF5722", highlightthickness=2)
+        logo_frame.place(x=830, y=10)
+        logo_frame.pack_propagate(False)
+        
+        # Главный символ
+        Label(logo_frame, text="🖥️", font=("Segoe UI Emoji", 40), 
+              bg="#1A237E", fg="#FFD54F").pack(expand=True, pady=(5, 0))
+        Label(logo_frame, text="TECH", font=("Arial", 9, "bold"), 
+              bg="#1A237E", fg="#FFD54F").pack()
     
     def setup_customers_tab(self):
         btn_frame = Frame(self.customers_frame, bg="#FFFFFF")
@@ -234,7 +211,6 @@ class MainWindow:
     def update_customers_table(self):
         for item in self.customers_tree.get_children():
             self.customers_tree.delete(item)
-        
         for customer in self.data_model.customers:
             self.customers_tree.insert("", "end", values=(
                 customer.last_name, customer.first_name, customer.email,
@@ -244,7 +220,6 @@ class MainWindow:
     def update_products_table(self):
         for item in self.products_tree.get_children():
             self.products_tree.delete(item)
-        
         for product in self.data_model.products:
             self.products_tree.insert("", "end", values=(
                 product.name, product.category, f"{product.price:.2f}", f"{product.weight:.3f}"
@@ -263,13 +238,10 @@ class MainWindow:
     def update_orders_table(self):
         for item in self.orders_tree.get_children():
             self.orders_tree.delete(item)
-        
         average_sum = self.calculate_average_sum()
-        
         for order in self.data_model.orders:
             customer = next((c for c in self.data_model.customers if c.id == order.customer_id), None)
             product = next((p for p in self.data_model.products if p.id == order.product_id), None)
-            
             if customer and product:
                 order_sum = product.price * order.quantity + self.DELIVERY_COST
                 deviation = order_sum - average_sum
@@ -403,7 +375,6 @@ class MainWindow:
         if not self.data_model.products:
             messagebox.showwarning("Предупреждение", "Сначала добавьте товары!")
             return
-        
         dialog = OrderDialog(self.window, self.data_model)
         self.window.wait_window(dialog.dialog)
         if dialog.result:
@@ -461,7 +432,6 @@ class MainWindow:
         if not self.data_model.orders:
             messagebox.showwarning("Предупреждение", "Нет заказов для сохранения!")
             return
-        
         filename = filedialog.asksaveasfilename(
             defaultextension=".csv",
             filetypes=[("CSV files", "*.csv"), ("All files", "*.*")],
